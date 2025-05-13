@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>抓娃娃机小游戏</title>
+    <style>
+        /* 游戏容器样式 */
+        #game-container {
+            width: 600px;
+            height: 400px;
+            margin: 20px auto;
+            border: 3px solid #ff0000;
+            background-color: #f0f0f0;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* 爪子样式 */
+        #claw {
+            width: 40px;
+            height: 40px;
+            position: absolute;
+            top: 20px;
+            left: 280px;
+            transition: left 0.1s linear;
+        }
+
+        /* 奖品样式 */
+        .prize {
+            width: 60px;
+            height: 60px;
+            position: absolute;
+            bottom: 20px;
+            background-color: #ff9900;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 60px;
+            font-size: 12px;
+        }
+
+        /* 控制按钮样式 */
+        #controls {
+            text-align: center;
+            margin: 20px;
+        }
+
+        /* 分数显示 */
+        #score {
+            text-align: center;
+            font-size: 24px;
+        }
+    </style>
+</head>
+<body>
+    <div id="score">得分: 0</div>
+    <div id="game-container">
+        <div id="claw">🕹️</div> <!-- 爪子 -->
+    </div>
+    <div id="controls">
+        <button onclick="moveLeft()">← 左移</button>
+        <button onclick="dropClaw()">↓ 抓取</button>
+        <button onclick="moveRight()">→ 右移</button>
+    </div>
+
+    <script>
+        // 游戏状态变量
+        let clawPosition = 280;      // 爪子水平位置
+        let isDropping = false;      // 爪子下落状态
+        let score = 0;               // 玩家得分
+        let prizes = [];             // 存储奖品元素
+
+        // 初始化游戏
+        function initGame() {
+            createPrizes();
+            document.addEventListener('keydown', handleKeyPress);
+        }
+
+        // 创建奖品（3个）
+        function createPrizes() {
+            const positions = [100, 270, 440]; // 奖品水平位置
+            positions.forEach(pos => {
+                const prize = document.createElement('div');
+                prize.className = 'prize';
+                prize.style.left = pos + 'px';
+                prize.textContent = '奖品';
+                document.getElementById('game-container').appendChild(prize);
+                prizes.push(prize);
+            });
+        }
+
+        // 处理键盘事件
+        function handleKeyPress(e) {
+            if (isDropping) return; // 下落期间禁止移动
+            if (e.key === 'ArrowLeft') moveLeft();
+            if (e.key === 'ArrowRight') moveRight();
+            if (e.key === ' ') dropClaw(); // 空格键抓取
+        }
+
+        // 左移爪子
+        function moveLeft() {
+            if (clawPosition > 20) {
+                clawPosition -= 20;
+                updateClawPosition();
+            }
+        }
+
+        // 右移爪子
+        function moveRight() {
+            if (clawPosition < 540) {
+                clawPosition += 20;
+                updateClawPosition();
+            }
+        }
+
+        // 更新爪子显示位置
+        function updateClawPosition() {
+            document.getElementById('claw').style.left = clawPosition + 'px';
+        }
+
+        // 下落抓取
+        function dropClaw() {
+            if (isDropping) return;
+            isDropping = true;
+            
+            // 下落动画
+            const claw = document.getElementById('claw');
+            let top = 20;
+            const dropInterval = setInterval(() => {
+                top += 5;
+                claw.style.top = top + 'px';
+                
+                // 到达底部检查是否抓到
+                if (top >= 300) {
+                    clearInterval(dropInterval);
+                    checkCollision();
+                    resetClaw();
+                }
+            }, 30);
+        }
+
+        // 重置爪子位置
+        function resetClaw() {
+            const claw = document.getElementById('claw');
+            let top = parseInt(claw.style.top);
+            
+            const riseInterval = setInterval(() => {
+                top -= 5;
+                claw.style.top = top + 'px';
+                
+                if (top <= 20) {
+                    clearInterval(riseInterval);
+                    isDropping = false;
+                }
+            }, 30);
+        }
+
+        // 碰撞检测
+        function checkCollision() {
+            prizes.forEach(prize => {
+                const prizeLeft = parseInt(prize.style.left);
+                // 检测爪子位置是否与奖品重叠
+                if (Math.abs(clawPosition - prizeLeft) < 30) {
+                    score += 10;
+                    document.getElementById('score').textContent = `得分: ${score}`;
+                    // 移除被抓到的奖品
+                    prize.remove();
+                }
+            });
+        }
+
+        // 启动游戏
+        initGame();
+    </script>
+</body>
+</html>
